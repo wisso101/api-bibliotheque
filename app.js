@@ -8,9 +8,10 @@ const app = express()
 app.use(express.json())
 
 // MongoDB URI (Azure ou local)
-const MONGO_URI =
- process.env.MONGODB_URI ||
- "mongodb://localhost:27017/bibliotheque"
+
+ const MONGO_URI =
+process.env.MONGODB_URI ||
+"mongodb+srv://wissaluser:wissal.musta%402002@cluster0.wbsaw2q.mongodb.net/ma_bibliotheque?retryWrites=true&w=majority"
 
 // connexion MongoDB
 mongoose.connect(MONGO_URI)
