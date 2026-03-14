@@ -4,46 +4,89 @@ const Livre = require("./models/Livre")
 
 const app = express()
 
+// middleware
 app.use(express.json())
 
-const MONGO_URI = process.env.MONGODB_URI || "mongodb://localhost:27017/bibliotheque"
+// MongoDB URI (Azure ou local)
+const MONGO_URI =
+ process.env.MONGODB_URI ||
+ "mongodb://localhost:27017/bibliotheque"
 
+// connexion MongoDB
 mongoose.connect(MONGO_URI)
-.then(()=> console.log("MongoDB connecté"))
-.catch(err => console.log(err))
+.then(() => {
+ console.log("MongoDB connecté")
+})
+.catch((err) => {
+ console.error("Erreur MongoDB :", err)
+})
 
+// CREATE livre
 app.post("/livres", async (req, res) => {
- const livre = new Livre(req.body)
- await livre.save()
- res.status(201).json(livre)
+ try {
+  const livre = new Livre(req.body)
+  await livre.save()
+  res.status(201).json(livre)
+ } catch (error) {
+  res.status(500).json({ error: error.message })
+ }
 })
 
+// READ tous les livres
 app.get("/livres", async (req, res) => {
- const livres = await Livre.find()
- res.json(livres)
+ try {
+  const livres = await Livre.find()
+  res.json(livres)
+ } catch (error) {
+  res.status(500).json({ error: error.message })
+ }
 })
 
+// UPDATE livre
 app.put("/livres/:id", async (req, res) => {
- const livre = await Livre.findByIdAndUpdate(
+ try {
+  const livre = await Livre.findByIdAndUpdate(
    req.params.id,
    req.body,
    { new: true }
- )
- res.json(livre)
+  )
+
+  if (!livre) {
+   return res.status(404).json({ message: "Livre non trouvé" })
+  }
+
+  res.json(livre)
+
+ } catch (error) {
+  res.status(500).json({ error: error.message })
+ }
 })
 
+// DELETE livre
 app.delete("/livres/:id", async (req, res) => {
- await Livre.findByIdAndDelete(req.params.id)
- res.json({ message: "Livre supprimé" })
+ try {
+  const livre = await Livre.findByIdAndDelete(req.params.id)
+
+  if (!livre) {
+   return res.status(404).json({ message: "Livre non trouvé" })
+  }
+
+  res.json({ message: "Livre supprimé" })
+
+ } catch (error) {
+  res.status(500).json({ error: error.message })
+ }
 })
 
-app.get("/health", (req,res)=>{
+// route health
+app.get("/health", (req, res) => {
  res.json({
-  status:"ok",
-  db:"connected"
+  status: "ok",
+  db: mongoose.connection.readyState === 1 ? "connected" : "disconnected"
  })
 })
 
+// port Azure
 const PORT = process.env.PORT || 8080
 
 app.listen(PORT, () => {
